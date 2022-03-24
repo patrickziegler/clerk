@@ -12,3 +12,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from .scanner import StatementScanner as scanner
+
+import re
+
+
+@scanner.register_filt("deutschebank")
+def deutschebank_filt(path):
+    pattern = "Kontoauszug.*pdf$"
+    return re.match(pattern, path) is not None
+
+
+@scanner.register_conv("deutschebank")
+def deutschebank_conv(path):
+    print(">>> " + path)
+    return [(3, 4, 5), (2, 3, 1), (1, 3, 4)]
+
+
+@scanner.register_conv_update("deutschebank")
+def deutschebank_conv_update(path):
+    raise NotImplementedError

@@ -13,32 +13,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
-import sys
-import re
-
-
-def vrbank_filt(path):
-    pattern = "Kontoauszug.*pdf$"
-    return re.match(pattern, path) is not None
-
-
-def vrbank_conv(path):
-    print(">>> " + path)
-    return [(3, 4, 5), (2, 3, 1), (1, 3, 4)]
+from .scanners import StatementScanner
 
 
 def main():
+    import os
+    import sys
+
     if len(sys.argv) < 2:
         raise RuntimeError("Not enough arguments")
-    filt = {
-        "vrbank": vrbank_filt,
-    }
-    conv = {
-        "vrbank": vrbank_conv
-    }
-    mode = "vrbank"
-    res = [item for root, _, files in os.walk(sys.argv[1])
-           for doc in files if filt[mode](doc)
-           for item in conv[mode](os.path.join(root, doc))]
-    print(res)
+
+    scanner = StatementScanner(sys.argv[1])
+
+    items = [item for root, _, files in os.walk(sys.argv[2])
+           for doc in files if scanner.filt(doc)
+           for item in scanner.conv(os.path.join(root, doc))]
+
+    print(sorted(items))
