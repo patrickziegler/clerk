@@ -15,5 +15,4 @@
 
 from .deutschebank import *
 from .ingdiba import *
-from .scanner import *
 from .vrbank import *
