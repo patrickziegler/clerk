@@ -17,7 +17,6 @@ from clerk.scanner import StatementScanner as scanner
 
 import csv
 import datetime
-import logging
 import os
 import re
 import tempfile
@@ -26,6 +25,8 @@ import time
 
 @scanner.register_filt("vrbank")
 def vrbank_filt(path):
+    """Return true if file with given path should be parsed with *_conv function"""
+
     pattern = ".*Kontoauszug.*pdf$"
     return re.match(pattern, path) is not None
 
@@ -34,10 +35,8 @@ def vrbank_filt(path):
 def vrbank_conv(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (pdf)"""
 
-    logging.info("Reading %s" % path)
-
     with tempfile.NamedTemporaryFile("r") as tmp:
-        os.system("pdftotext -layout -q " + path + " " + tmp.name)
+        os.system("pdftotext -layout -q %s %s" % (path, tmp.name))
         text = [line for line in tmp.readlines() if line != ""]
 
     year = None
@@ -62,9 +61,9 @@ def vrbank_conv(path):
             continue
 
         scope = text[i].split()
-
         if len(scope) == 0:
             continue
+
         try:
             date = datetime.datetime.strptime(scope[0] + year, "%d.%m.%Y")
             description = None
@@ -75,7 +74,6 @@ def vrbank_conv(path):
                 description = " ".join(scope[2:-2])
                 value = scope[-2].replace(".", "").replace(",", ".")
                 value = float("{value:.{digits}f}".format(value=float(value), digits=2))
-
                 if scope[-1].lower() == "s":
                     value = -1 * value
 
@@ -93,24 +91,23 @@ def vrbank_conv(path):
             yield (date, description, value)
 
         except ValueError:
-            pass
+            continue
 
 
 @scanner.register_conv_update("vrbank")
 def vrbank_conv_update(path):
-    """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (csv)"""
+    """Yield tuples like (<date>, <description>, <amount>) as found in the given update file (csv)"""
 
-    with open(filename, "r", encoding="ISO-8859-1") as fp:
-        reader = csv.reader(fp, delimiter=";", quotechar="\"")
+    with open(path, "r", encoding="ISO-8859-1") as fd:
+        reader = csv.reader(fd, delimiter=";", quotechar="\"")
         for line in reader:
+            if len(line) < 13 or line[1] == "":
+                continue
             try:
-                if line[1] == "":
-                    continue
-                date = datetime.strptime(line[0], "%d.%m.%Y")
-                description = " ".join(line[2:10])
-                value = float(line[-2].replace(".", "").replace(",", ".")) * (-1 if line[-1].lower() == "s" else 1)
-
-                yield (date, description, value)
-
+                yield (
+                    datetime.datetime.strptime(line[0], "%d.%m.%Y"),
+                    " ".join(line[2:10]),
+                    float(line[-2].replace(".", "").replace(",", ".")) * (-1 if line[-1].lower() == "s" else 1)
+                )
             except (ValueError, IndexError):
                 continue

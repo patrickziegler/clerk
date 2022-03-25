@@ -23,6 +23,8 @@ import tempfile
 
 @scanner.register_filt("ingdiba")
 def ingdiba_filt(path):
+    """Return true if file with given path should be parsed with *_conv function"""
+
     pattern = "^Girokonto.*Kontoauszug.*pdf$"
     return re.match(pattern, path) is not None
 
@@ -35,62 +37,41 @@ def ingdiba_conv(path):
         "TILG", # kfw lastschrift bafoeg beschreibung missdeutig
     ]
 
-    assets = []
-
     with tempfile.NamedTemporaryFile("r") as tmp:
-        os.system("pdftotext -raw -q " + path + " " + tmp.name)
+        os.system("pdftotext -raw -q %s %s" % (path, tmp.name))
 
         for line in tmp.readlines():
             words = line.split()
             if len(words) < 2:
                 continue
-
             try:
-                date = datetime.datetime.strptime(words[0], "%d.%m.%Y")
+                if [forbidden for forbidden in blacklist if forbidden in words]:
+                    continue
+                if "," not in words[-1]:
+                    continue
+                yield (
+                    datetime.datetime.strptime(words[0], "%d.%m.%Y"),
+                    " ".join(words[1:-1]),
+                    float(words[-1].replace(".", "").replace(",", "."))
+                )
             except ValueError:
                 continue
-
-            try:
-                if [w for w in blacklist if w in words]:
-                    continue
-
-                if "," in words[-1] and "TILG" not in words:
-                    value = float(words[-1].replace(".", "").replace(",", "."))
-                else:
-                    raise ValueError
-
-                assets.append((date, " ".join(words[1:-1]), value))
-
-            except ValueError:
-
-                if len(assets) > 0 and date == assets[-1][0]:
-                    value = assets[-1][2]
-                    description = assets[-1][1] + " " + " ".join(words[1::])
-                    del assets[-1]
-                    assets.append((date, description, value))
-
-    for asset in assets:
-        yield asset
 
 
 @scanner.register_conv_update("ingdiba")
 def ingdiba_conv_update(path):
-    """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (csv)"""
+    """Yield tuples like (<date>, <description>, <amount>) as found in the given update file (csv)"""
 
-    assets = []
-
-    for line in DocumentCrawler._get_text(filename):
-        words = line.split(";")
-        if len(words) < 9 or "," not in words[-2]:
-            continue
-        try:
-            assets.append((
-                datetime.datetime.strptime(words[0], "%d.%m.%Y"),
-                " ".join(words[2:5]),
-                float(words[-2].replace(".", "").replace(",", "."))
-            ))
-        except ValueError:
-            continue
-
-    for asset in assets:
-        yield asset
+    with open(path, "r", encoding="ISO-8859-1") as fp:
+        for line in fp.readlines():
+            words = line.split(";")
+            if len(words) < 9 or "," not in words[-2]:
+                continue
+            try:
+                yield (
+                    datetime.datetime.strptime(words[0], "%d.%m.%Y"),
+                    " ".join(words[2:5]),
+                    float(words[-2].replace(".", "").replace(",", "."))
+                )
+            except ValueError:
+                continue
