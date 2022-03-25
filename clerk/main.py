@@ -24,14 +24,15 @@ import os
 import pathlib
 import sqlite3
 
+
 sql_auszug = """
-create view if not exists Kontoauszug(Datum, Beschreibung, Betrag, Saldo) AS
-select strftime('%Y-%m-%d', date) as Datum, description as Beschreibung, value as Betrag, (
-    select round(sum(t2.value), 2)
-    from transactions t2
-    where t2.id <= t1.id
-) as Saldo
-from transactions t1;
+CREATE VIEW IF NOT EXISTS Kontoauszug(Datum, Beschreibung, Betrag, Saldo) AS
+SELECT strftime('%Y-%m-%d', date) AS Datum, description AS Beschreibung, value AS Betrag, (
+    SELECT round(sum(t2.value), 2)
+    FROM __transactions__ t2
+    WHERE t2.id <= t1.id
+) AS Saldo
+FROM __transactions__ t1;
 """
 
 
@@ -65,6 +66,12 @@ def parse_args():
                         default=None,
                         help="Update file with recent transfers younger than the last bank statement")
 
+    parser.add_argument("-s", "--sql",
+                        type=str,
+                        dest="sql_dir",
+                        default=None,
+                        help="Directory containing sql files for postprocessing")
+
     parser.add_argument("--version",
                         action='version',
                         version="clerk v" + __version__ +
@@ -94,8 +101,22 @@ def main():
 
     conn = sqlite3.connect(args.output_file)
     curs = conn.cursor()
-    curs.execute("CREATE TABLE transactions (id INTEGER PRIMARY KEY, date INTEGER, description TEXT, value REAL)")
-    curs.executemany("INSERT OR IGNORE INTO transactions (Date, Description, Value) VALUES(?,?,?)", sorted(transactions))
+    curs.execute("CREATE TABLE __transactions__ (id INTEGER PRIMARY KEY, date INTEGER, description TEXT, value REAL)")
+    curs.executemany("INSERT OR IGNORE INTO __transactions__ (Date, Description, Value) VALUES(?,?,?)", sorted(transactions))
     curs.executescript(sql_auszug)
+
+    if args.sql_dir is not None:
+        for root, _, files in os.walk(args.sql_dir):
+            for filename in files:
+                path = os.path.join(root, filename)
+                base, ext = os.path.splitext(filename)
+                if ext == ".sql":
+                    with open(path, "r") as fd:
+                        curs.executescript("\n".join(fd.readlines()))
+                elif ext == ".csv":
+                    curs.execute("CREATE TABLE " + base + " (id INTEGER PRIMARY KEY, description TEXT)")
+                    with open(path, "r") as fd:
+                        curs.executemany("INSERT INTO " + base + " (Description) VALUES (?)", [(s[:-1],) for s in fd.readlines()])
+
     conn.commit()
     conn.close()
