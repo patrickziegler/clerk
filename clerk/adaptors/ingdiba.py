@@ -33,6 +33,8 @@ def ingdiba_filt(path):
 def ingdiba_conv(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (pdf)"""
 
+    print("Scanning " + path)
+
     blacklist = [
         "TILG", # kfw lastschrift bafoeg beschreibung missdeutig
     ]
@@ -61,6 +63,8 @@ def ingdiba_conv(path):
 @scanner.register_conv_update("ingdiba")
 def ingdiba_conv_update(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given update file (csv)"""
+
+    print("Scanning " + path)
 
     with open(path, "r", encoding="ISO-8859-1") as fp:
         for line in fp.readlines():

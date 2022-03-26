@@ -35,6 +35,8 @@ def vrbank_filt(path):
 def vrbank_conv(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (pdf)"""
 
+    print("Scanning " + path)
+
     with tempfile.NamedTemporaryFile("r") as tmp:
         os.system("pdftotext -layout -q %s %s" % (path, tmp.name))
         text = [line for line in tmp.readlines() if line != ""]
@@ -97,6 +99,8 @@ def vrbank_conv(path):
 @scanner.register_conv_update("vrbank")
 def vrbank_conv_update(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given update file (csv)"""
+
+    print("Scanning " + path)
 
     with open(path, "r", encoding="ISO-8859-1") as fd:
         reader = csv.reader(fd, delimiter=";", quotechar="\"")

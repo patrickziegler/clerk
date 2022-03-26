@@ -54,7 +54,7 @@ def parse_args():
                         default="transactions.sqlite3",
                         help="Output file name (optional)")
 
-    parser.add_argument("-i", "--inital",
+    parser.add_argument("-i", "--initial",
                         type=str,
                         dest="initial_transaction",
                         default=None,

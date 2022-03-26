@@ -34,7 +34,7 @@ def deutschebank_filt(path):
 def deutschebank_conv(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (pdf)"""
 
-    print(path)
+    print("Scanning " + path)
 
     with tempfile.NamedTemporaryFile("r") as tmp:
         os.system("pdf2ps %s - | ps2pdf - - | pdftotext -raw -q - %s" % (path, tmp.name))
@@ -81,6 +81,8 @@ def deutschebank_conv(path):
 @scanner.register_conv_update("deutschebank")
 def deutschebank_conv_update(path):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given update file (csv)"""
+
+    print("Scanning " + path)
 
     with open(path, "r", encoding="ISO-8859-1") as fp:
         reader = csv.reader(fp, delimiter=";", quotechar="\"")
