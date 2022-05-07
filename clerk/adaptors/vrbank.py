@@ -102,16 +102,14 @@ def vrbank_conv_update(path):
 
     print("Scanning " + path)
 
-    with open(path, "r", encoding="ISO-8859-1") as fd:
+    with open(path, "r", encoding="utf-8") as fd:
         reader = csv.reader(fd, delimiter=";", quotechar="\"")
         for line in reader:
-            if len(line) < 13 or line[1] == "":
-                continue
             try:
                 yield (
-                    datetime.datetime.strptime(line[0], "%d.%m.%Y"),
-                    " ".join(line[2:10]).replace("\n", " "),
-                    float(line[-2].replace(".", "").replace(",", ".")) * (-1 if line[-1].lower() == "s" else 1)
+                    datetime.datetime.strptime(line[4], "%d.%m.%Y"),
+                    " ".join((line[6], line[10])).replace("\n", " "),
+                    float(line[11].replace(".", "").replace(",", "."))
                 )
             except (ValueError, IndexError):
                 continue
