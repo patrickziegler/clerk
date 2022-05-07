@@ -68,12 +68,12 @@ def vrbank_conv(path):
 
         try:
             date = datetime.datetime.strptime(scope[0] + year, "%d.%m.%Y")
-            description = None
+            description = list()
             value = None
 
             if len(scope) > 1:
                 time.strptime(scope[1] + year, "%d.%m.%Y")
-                description = " ".join(scope[2:-2])
+                description.extend(scope[2:-2])
                 value = scope[-2].replace(".", "").replace(",", ".")
                 value = float("{value:.{digits}f}".format(value=float(value), digits=2))
                 if scope[-1].lower() == "s":
@@ -86,11 +86,11 @@ def vrbank_conv(path):
                         break
                     if len(scope) > 1 and re.match(".*XX.*XX.*XX.*XX", "".join(scope[0:2]).replace(".", "XX")) is not None:
                         break
-                    description += " ".join(scope)
+                    description.extend(scope)
                     skip = j
                     j += 1
 
-            yield (date, description, value)
+            yield (date, " ".join(description).replace("\n", " "), value)
 
         except ValueError:
             continue
@@ -110,7 +110,7 @@ def vrbank_conv_update(path):
             try:
                 yield (
                     datetime.datetime.strptime(line[0], "%d.%m.%Y"),
-                    " ".join(line[2:10]),
+                    " ".join(line[2:10]).replace("\n", " "),
                     float(line[-2].replace(".", "").replace(",", ".")) * (-1 if line[-1].lower() == "s" else 1)
                 )
             except (ValueError, IndexError):

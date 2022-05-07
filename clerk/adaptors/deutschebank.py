@@ -61,7 +61,7 @@ def deutschebank_conv(path):
                 if date != None:
                     yield (
                         date,
-                        description.replace("Verwendungszweck/ Kundenreferenz", ""),
+                        description.replace("Verwendungszweck/ Kundenreferenz", "").replace("\n", " "),
                         value
                     )
                 description = ""
@@ -92,7 +92,7 @@ def deutschebank_conv_update(path):
             try:
                 yield (
                     datetime.datetime.strptime(line[0], "%d.%m.%Y"),
-                    line[4],
+                    line[4].replace("\n", " "),
                     float((line[-2] if line[-3] == "" else line[-3]).replace(".", "").replace(",", "."))
                 )
             except (ValueError, IndexError):

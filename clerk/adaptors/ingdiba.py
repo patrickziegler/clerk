@@ -53,7 +53,7 @@ def ingdiba_conv(path):
                     continue
                 yield (
                     datetime.datetime.strptime(words[0], "%d.%m.%Y"),
-                    " ".join(words[1:-1]),
+                    " ".join(words[1:-1]).replace("\n", " "),
                     float(words[-1].replace(".", "").replace(",", "."))
                 )
             except ValueError:
@@ -74,7 +74,7 @@ def ingdiba_conv_update(path):
             try:
                 yield (
                     datetime.datetime.strptime(words[0], "%d.%m.%Y"),
-                    " ".join(words[2:5]),
+                    " ".join(words[2:5]).replace("\n", " "),
                     float(words[-2].replace(".", "").replace(",", "."))
                 )
             except ValueError:
