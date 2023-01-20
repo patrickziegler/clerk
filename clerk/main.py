@@ -75,7 +75,7 @@ def parse_args():
     parser.add_argument("--version",
                         action='version',
                         version="clerk v" + __version__ +
-                        ", Copyright (C) 2022 Patrick Ziegler")
+                        ", Copyright (C) 2022-2023 Patrick Ziegler")
 
     return parser.parse_args()
 

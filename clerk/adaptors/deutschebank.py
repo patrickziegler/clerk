@@ -54,6 +54,9 @@ def deutschebank_conv(path, verbose=False):
     if year is None:
         return
 
+    # since Dec 2022 the detection of date would fail without the following filter
+    text = [line for line in text if line != year]
+
     i = 0
     date, description, value = (None, "", None)
     while i < len(text):
@@ -66,8 +69,7 @@ def deutschebank_conv(path, verbose=False):
                         description.replace("Verwendungszweck/ Kundenreferenz", "").replace("\n", " "),
                         value
                     )
-                description = ""
-                value = buf
+                date, description, value = (None, "", buf)
             except ValueError:
                 pass
         elif i < len(text) - 1:
