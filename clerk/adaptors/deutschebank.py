@@ -31,7 +31,7 @@ def deutschebank_filt(path):
 
 
 @scanner.register_conv("deutschebank")
-def deutschebank_conv(path):
+def deutschebank_conv(path, verbose=False):
     """Yield tuples like (<date>, <description>, <amount>) as found in the given bank statement (pdf)"""
 
     print("Scanning " + path)
@@ -39,6 +39,8 @@ def deutschebank_conv(path):
     with tempfile.NamedTemporaryFile("r") as tmp:
         os.system("pdf2ps %s - | ps2pdf - - | pdftotext -raw -q - %s" % (path, tmp.name))
         text = [line.rstrip("\n") for line in tmp.readlines()]
+        if verbose:
+            print("\n".join(text))
 
     year = None
     for i in range(len(text)):
@@ -97,3 +99,10 @@ def deutschebank_conv_update(path):
                 )
             except (ValueError, IndexError):
                 continue
+
+
+if __name__ == "__main__":
+    import sys
+    sc = scanner("deutschebank")
+    for transaction in sc.conv(sys.argv[1], verbose=True):
+        print(transaction)
