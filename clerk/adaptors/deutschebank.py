@@ -46,7 +46,7 @@ def deutschebank_conv(path, verbose=False):
     for i in range(len(text)):
         if re.match("Kontoauszug vom .* bis .*", text[i]):
             try:
-                year = str(int(text[i][-4:])) # via int to trigger ValueError for invalid input
+                year = int(text[i][-4:]) # via int to trigger ValueError for invalid input
                 break
             except ValueError:
                 pass
@@ -55,7 +55,7 @@ def deutschebank_conv(path, verbose=False):
         return
 
     # since Dec 2022 the detection of date would fail without the following filter
-    text = [line for line in text if line != year]
+    text = [line for line in text if line not in (str(year), str(year-1))]
 
     i = 0
     date, description, value = (None, "", None)
@@ -74,8 +74,8 @@ def deutschebank_conv(path, verbose=False):
                 pass
         elif i < len(text) - 1:
             try:
-                assert datetime.datetime.strptime(text[i] + year, "%d.%m.%Y")
-                date = datetime.datetime.strptime(text[i+1] + year, "%d.%m.%Y")
+                assert datetime.datetime.strptime(text[i] + str(year), "%d.%m.%Y")
+                date = datetime.datetime.strptime(text[i+1] + str(year), "%d.%m.%Y")
                 i += 1
             except ValueError:
                 description += " " + text[i]
