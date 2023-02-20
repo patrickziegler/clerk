@@ -66,7 +66,7 @@ def deutschebank_conv(path, verbose=False):
                 if date != None:
                     yield (
                         date,
-                        description.replace("Verwendungszweck/ Kundenreferenz", "").replace("\n", " "),
+                        description.replace("Verwendungszweck/ Kundenreferenz", "").replace("Kartenzahlung", "").replace("\n", " "),
                         value
                     )
                 date, description, value = (None, "", buf)
