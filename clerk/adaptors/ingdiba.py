@@ -35,27 +35,22 @@ def ingdiba_conv(path):
 
     print("Scanning " + path)
 
-    blacklist = [
-        "TILG", # kfw lastschrift bafoeg beschreibung missdeutig
-    ]
-
     with tempfile.NamedTemporaryFile("r") as tmp:
         os.system("pdftotext -raw -q %s %s" % (path, tmp.name))
-
-        for line in tmp.readlines():
-            words = line.split()
+        lines = tmp.readlines()
+        it = iter(range(len(lines)))
+        for i in it:
+            words = lines[i].split()
             if len(words) < 2:
                 continue
             try:
-                if [forbidden for forbidden in blacklist if forbidden in words]:
-                    continue
-                if "," not in words[-1]:
-                    continue
-                yield (
-                    datetime.datetime.strptime(words[0], "%d.%m.%Y"),
-                    " ".join(words[1:-1]).replace("\n", " "),
-                    float(words[-1].replace(".", "").replace(",", "."))
-                )
+                date = datetime.datetime.strptime(words[0], "%d.%m.%Y")
+                description = " ".join(words[1:-1]).replace("\n", " ")
+                if i < len(lines):
+                    description += " " + " ".join(lines[i+1].split()[1::])
+                value = float(words[-1].replace(".", "").replace(",", "."))
+                yield date, description, value
+                next(it)
             except ValueError:
                 continue
 
