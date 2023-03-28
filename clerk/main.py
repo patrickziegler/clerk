@@ -66,12 +66,6 @@ def parse_args():
                         default=None,
                         help="Update file with recent transfers younger than the last bank statement")
 
-    parser.add_argument("-s", "--sql",
-                        type=str,
-                        dest="sql_dir",
-                        default=None,
-                        help="Directory containing sql files for postprocessing")
-
     parser.add_argument("--version",
                         action='version',
                         version="clerk v" + __version__ +
@@ -104,19 +98,5 @@ def main():
     curs.execute("CREATE TABLE __transactions__ (id INTEGER PRIMARY KEY, date INTEGER, description TEXT, value REAL)")
     curs.executemany("INSERT OR IGNORE INTO __transactions__ (Date, Description, Value) VALUES(?,?,?)", sorted(transactions))
     curs.executescript(sql_auszug)
-
-    if args.sql_dir is not None:
-        for root, _, files in os.walk(args.sql_dir):
-            for filename in files:
-                path = os.path.join(root, filename)
-                base, ext = os.path.splitext(filename)
-                if ext == ".sql":
-                    with open(path, "r") as fd:
-                        curs.executescript("\n".join(fd.readlines()))
-                elif ext == ".csv":
-                    curs.execute("CREATE TABLE " + base + " (id INTEGER PRIMARY KEY, description TEXT)")
-                    with open(path, "r") as fd:
-                        curs.executemany("INSERT INTO " + base + " (Description) VALUES (?)", [(s[:-1],) for s in fd.readlines()])
-
     conn.commit()
     conn.close()
