@@ -14,5 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .deutschebank import *
+from .hanseatic import *
 from .ingdiba import *
 from .vrbank import *
