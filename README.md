@@ -15,7 +15,7 @@ Considering a file structure like shown below, you can use `clerk ingdiba ./diba
 │   │   └── Girokonto_xxxxxxxxxx_Kontoauszug_20220302.pdf
 │   ├── Makefile
 │   ├── transactions.sqlite3 # will be created by clerk
-│   └── umsatz_liste.csv
+│   └── umsatz.csv
 ```
 
 If your folder structure does not contain the full history of your bank account, you can use the option `--initial` to add an initial transaction with any offset you need.
@@ -26,7 +26,7 @@ It is convenient to use a `Makefile` for generating and opening the database wit
 
 ```Makefile
 all:
-  clerk ingdiba . --initial "2000-01-01 00:00:00;Uebertrag;123.45" --update umsatz_liste.csv
+  clerk ingdiba . --initial "2000-01-01 00:00:00;Uebertrag;123.45" --update umsatz.csv
   sqlitebrowser transactions.sqlite3 &
 ```
 
