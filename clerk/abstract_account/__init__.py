@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Patrick Ziegler
+# Copyright (C) 2023 Patrick Ziegler
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,4 +13,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__version__ = "0.3.3"
+from .adaptors import *
+from .abstract_account import AbstractAccount

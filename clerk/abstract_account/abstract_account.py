@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import operator
+import os
 import pathlib
 import sqlite3
-import os
-import operator
 
 SQL_ABSTRACT_ACCOUNT = """
 create view if not exists Kontoauszug(Datum, Beschreibung, Betrag, Saldo) as
@@ -29,7 +29,7 @@ from __transactions__ t1;
 """
 
 
-class StatementScanner:
+class AbstractAccount:
 
     _filt = {}
     _conv = {}

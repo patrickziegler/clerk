@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .adaptors import *
-from .scanner import StatementScanner
+from .abstract_account import *
 from clerk import __version__
 
 import argparse
@@ -22,38 +21,39 @@ import datetime
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Converts your folder full of bank statements into a simple sqlite database for postprocessing with SQL")
+    parser = argparse.ArgumentParser(description="???")
 
-    parser.add_argument("scanner",
-                        type=str,
-                        help="Keyword of the the statement scanner to be used")
+    command = parser.add_subparsers(dest="command", description="jsnkjnas")
 
-    parser.add_argument("input_dir",
-                        type=str,
+    abstract_account = command.add_parser(name="abstract_account", description="Converts your folder full of bank statements into a simple sqlite database for postprocessing with SQL")
+
+    abstract_account.add_argument("provider", type=str,
+                        help="Keyword of the the data provider to be used")
+
+    abstract_account.add_argument("input_dir", type=str,
                         help="Input folder containing the bank statements")
 
-    parser.add_argument("output_file",
-                        type=str,
-                        nargs="?",
-                        default="transactions.sqlite3",
+    abstract_account.add_argument("output_file", type=str, nargs="?", default="transactions.sqlite3",
                         help="Output file name (optional)")
 
-    parser.add_argument("-i", "--initial",
-                        type=str,
-                        dest="initial_transaction",
-                        default=None,
+    abstract_account.add_argument("-i", "--initial", type=str, dest="initial_transaction", default=None,
                         help="Initial transfer in the form of <YYYY-mm-dd HH:MM:SS>;<description>;<amount>")
 
-    parser.add_argument("-u", "--update",
-                        type=str,
-                        dest="update_file",
-                        default=None,
+    abstract_account.add_argument("-u", "--update", type=str, dest="update_file", default=None,
                         help="Update file with recent transfers younger than the last bank statement")
 
-    parser.add_argument("--version",
-                        action='version',
-                        version="clerk v" + __version__ +
+    order_book = command.add_parser(name="order_book", description="???")
+
+    order_book.add_argument("provider", type=str,
+                        help="Keyword of the the data provider to be used")
+
+    order_book.add_argument("input_dir", type=str,
+                        help="Input folder containing the order settlements")
+
+    order_book.add_argument("output_file", type=str, nargs="?", default="order_book.sqlite3",
+                        help="Output file name (optional)")
+
+    parser.add_argument("--version", action='version', version="clerk v" + __version__ +
                         ", Copyright (C) 2022-2023 Patrick Ziegler")
 
     return parser.parse_args()
@@ -62,14 +62,18 @@ def parse_args():
 def main():
     args = parse_args()
 
-    scanner = StatementScanner(args.scanner)
-    scanner.scan(args.input_dir)
+    if args.command == "abstract_account":
+        scanner = AbstractAccount(args.provider)
+        scanner.scan(args.input_dir)
 
-    if args.initial_transaction is not None:
-        date, description, amount = args.initial_transaction.split(";")
-        scanner.add((datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S"), description, float(amount)))
+        if args.initial_transaction is not None:
+            date, description, amount = args.initial_transaction.split(";")
+            scanner.add((datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S"), description, float(amount)))
 
-    if args.update_file is not None:
-        scanner.update(args.update_file)
+        if args.update_file is not None:
+            scanner.update(args.update_file)
 
-    scanner.export(args.output_file)
+        scanner.export(args.output_file)
+
+    elif args.command == "order_book":
+        raise NotImplementedError

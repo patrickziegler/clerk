@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from clerk.scanner import StatementScanner as scanner
+from clerk.abstract_account.abstract_account import AbstractAccount as scanner
 
 import datetime
 import os

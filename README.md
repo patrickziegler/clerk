@@ -4,7 +4,7 @@ Converts your folder full of bank statements into a simple sqlite database for p
 
 ## Usage
 
-Considering a file structure like shown below, you can use `clerk ingdiba ./diba` to recursively search for bank statements and collect all transactions into a single sqlite database.
+Considering a file structure like shown below, you can use `clerk abstract_account ingdiba ./diba` to recursively search for bank statements and collect all transactions into a single sqlite database.
 
 ```sh
 .
@@ -26,7 +26,7 @@ It is convenient to use a `Makefile` for generating and opening the database wit
 
 ```Makefile
 all:
-  clerk ingdiba . --initial "2000-01-01 00:00:00;Uebertrag;123.45" --update umsatz.csv
+  clerk abstract_account ingdiba . --initial "2000-01-01 00:00:00;Uebertrag;123.45" --update umsatz.csv
   sqlitebrowser transactions.sqlite3 &
 ```
 
