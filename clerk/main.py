@@ -19,21 +19,6 @@ from clerk import __version__
 
 import argparse
 import datetime
-import operator
-import os
-import pathlib
-import sqlite3
-
-
-sql_auszug = """
-CREATE VIEW IF NOT EXISTS Kontoauszug(Datum, Beschreibung, Betrag, Saldo) AS
-SELECT strftime('%Y-%m-%d', date) AS Datum, description AS Beschreibung, value AS Betrag, (
-    SELECT round(sum(t2.value), 2)
-    FROM __transactions__ t2
-    WHERE t2.id <= t1.id
-) AS Saldo
-FROM __transactions__ t1;
-"""
 
 
 def parse_args():
@@ -78,25 +63,13 @@ def main():
     args = parse_args()
 
     scanner = StatementScanner(args.scanner)
-
-    transactions = [transaction for root, _, files in os.walk(args.input_dir)
-           for statement in files if scanner.filt(statement)
-           for transaction in scanner.conv(os.path.join(root, statement))]
+    scanner.scan(args.input_dir)
 
     if args.initial_transaction is not None:
         date, description, amount = args.initial_transaction.split(";")
-        transactions.append((datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S"), description, float(amount)))
+        scanner.add((datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S"), description, float(amount)))
 
     if args.update_file is not None:
-        date_max = max(transactions, key=operator.itemgetter(0))[0]
-        transactions.extend(item for item in scanner.conv_update(args.update_file) if item[0] > date_max)
+        scanner.update(args.update_file)
 
-    pathlib.Path(args.output_file).unlink(missing_ok=True)
-
-    conn = sqlite3.connect(args.output_file)
-    curs = conn.cursor()
-    curs.execute("CREATE TABLE __transactions__ (id INTEGER PRIMARY KEY, date INTEGER, description TEXT, value REAL)")
-    curs.executemany("INSERT OR IGNORE INTO __transactions__ (Date, Description, Value) VALUES(?,?,?)", sorted(transactions))
-    curs.executescript(sql_auszug)
-    conn.commit()
-    conn.close()
+    scanner.export(args.output_file)
