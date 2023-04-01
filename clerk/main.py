@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .abstract_account import *
+from .order_book import *
 from clerk import __version__
 
 import argparse
@@ -76,4 +77,6 @@ def main():
         scanner.export(args.output_file)
 
     elif args.command == "order_book":
-        raise NotImplementedError
+        scanner = OrderBook(args.provider)
+        scanner.scan(args.input_dir)
+        scanner.export(args.output_file)
