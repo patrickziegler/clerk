@@ -47,7 +47,7 @@ def trade_republic_conv(path):
     capital_returns_tax = None
     soli = None
     church_tax = None
-    multiplier = None
+    sign = None
 
     with tempfile.NamedTemporaryFile("r") as tmp:
         os.system("pdftotext -raw -q %s %s" % (path, tmp.name))
@@ -58,16 +58,18 @@ def trade_republic_conv(path):
             description = " ".join(result.group(1).split("\n"))
 
         for line in text.split("\n"):
-            result = re.search(r"Verkauf am (\d+.\d+.\d+),", line)
-            if result != None and len(result.groups()):
-                date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y")
-                multiplier = 1.0
+            result = re.search(r"Verkauf am (\d+.\d+.\d+), um (\d+:\d+) Uhr", line)
+            if result != None and len(result.groups()) > 1:
+                datestr = "%s %s" % (result.group(1), result.group(2))
+                date = datetime.datetime.strptime(datestr, "%d.%m.%Y %H:%M")
+                sign = -1.0
                 continue
 
-            result = re.search(r"Kauf am (\d+.\d+.\d+),", line)
-            if result != None and len(result.groups()):
-                date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y")
-                multiplier = -1.0
+            result = re.search(r"Kauf am (\d+.\d+.\d+), um (\d+:\d+) Uhr", line)
+            if result != None and len(result.groups()) > 1:
+                datestr = "%s %s" % (result.group(1), result.group(2))
+                date = datetime.datetime.strptime(datestr, "%d.%m.%Y %H:%M")
+                sign = 1.0
                 continue
 
             result = re.search(r"ISIN: (.*)", line)
@@ -99,9 +101,9 @@ def trade_republic_conv(path):
 
             result = re.search(r"(\d+) Stk (-?\d+\.\d+) EUR (-?\d+\.\d+) EUR", line)
             if result != None and len(result.groups()) > 2:
-                quantity = float(result.group(1).replace(",", "."))
+                quantity = float(result.group(1).replace(",", ".")) * sign
                 price = float(result.group(2).replace(",", "."))
-                value = float(result.group(3).replace(",", ".")) * multiplier
+                value = float(result.group(3).replace(",", ".")) * sign * -1.0
                 continue
 
     yield date, description, isin, quantity, price, value, fee, capital_returns_tax, soli, church_tax, path
