@@ -36,50 +36,58 @@ def deutschebank_conv(path, verbose=False):
 
     print("Scanning " + path)
 
-    with tempfile.NamedTemporaryFile("r") as tmp:
-        os.system("pdf2ps %s - | ps2pdf - - | pdftotext -raw -q - %s" % (path, tmp.name))
-        text = [line.rstrip("\n") for line in tmp.readlines()]
-        if verbose:
-            print("\n".join(text))
+    pipelines = [
+        "pdf2ps %s - | ps2pdf - - | pdftotext -raw -q - %s",
+        "pdftotext -raw -q %s %s"
+    ]
 
-    year = None
-    for i in range(len(text)):
-        if re.match("Kontoauszug vom .* bis .*", text[i]):
-            try:
-                year = int(text[i][-4:]) # via int to trigger ValueError for invalid input
-                break
-            except ValueError:
-                pass
+    # since Aug 2023 the files use a different coding scheme, we need to try which approach works
+    for pipeline in pipelines:
 
-    if year is None:
-        return
+        with tempfile.NamedTemporaryFile("r") as tmp:
+            os.system(pipeline % (path, tmp.name))
+            text = [line.rstrip("\n") for line in tmp.readlines()]
+            if verbose:
+                print("\n".join(text))
 
-    # since Dec 2022 the detection of date would fail without the following filter
-    text = [line for line in text if line not in (str(year), str(year-1))]
+        year = None
+        for i in range(len(text)):
+            if re.match("Kontoauszug vom .* bis .*", text[i]):
+                try:
+                    year = int(text[i][-4:]) # via int to trigger ValueError for invalid input
+                    break
+                except ValueError:
+                    pass
 
-    i = 0
-    date, description, value = (None, "", None)
-    while i < len(text):
-        if text[i][:2] in ("- ", "+ ") and "," in text[i]:
-            try:
-                buf = float(text[i].replace(".", "").replace(",", ".").replace(" ", ""))
-                if date != None:
-                    yield (
-                        date,
-                        description.replace("Verwendungszweck/ Kundenreferenz", "").replace("\n", " ").strip(),
-                        value
-                    )
-                date, description, value = (None, "", buf)
-            except ValueError:
-                pass
-        elif i < len(text) - 1:
-            try:
-                assert datetime.datetime.strptime(text[i] + str(year), "%d.%m.%Y")
-                date = datetime.datetime.strptime(text[i+1] + str(year), "%d.%m.%Y")
-                i += 1
-            except ValueError:
-                description += " " + text[i]
-        i += 1
+        if year is None:
+            continue
+
+        # since Dec 2022 the detection of date would fail without the following filter
+        text = [line for line in text if line not in (str(year), str(year-1))]
+
+        i = 0
+        date, description, value = (None, "", None)
+        while i < len(text):
+            if text[i][:2] in ("- ", "+ ") and "," in text[i]:
+                try:
+                    buf = float(text[i].replace(".", "").replace(",", ".").replace(" ", ""))
+                    if date != None:
+                        yield (
+                            date,
+                            description.replace("Verwendungszweck/ Kundenreferenz", "").replace("\n", " ").strip(),
+                            value
+                        )
+                    date, description, value = (None, "", buf)
+                except ValueError:
+                    pass
+            elif i < len(text) - 1:
+                try:
+                    assert datetime.datetime.strptime(text[i] + str(year), "%d.%m.%Y")
+                    date = datetime.datetime.strptime(text[i+1] + str(year), "%d.%m.%Y")
+                    i += 1
+                except ValueError:
+                    description += " " + text[i]
+            i += 1
 
 
 @scanner.register_conv_update("deutschebank")
