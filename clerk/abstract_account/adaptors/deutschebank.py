@@ -96,7 +96,7 @@ def deutschebank_conv_update(path):
             try:
                 yield (
                     datetime.datetime.strptime(line[0], "%d.%m.%Y"),
-                    line[4].replace("\n", " "),
+                    " ".join(field for field in line[2:5] if field != "").replace("\n", " "),
                     float((line[-2] if line[-3] == "" else line[-3]).replace(".", "").replace(",", "."))
                 )
             except (ValueError, IndexError):
