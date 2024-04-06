@@ -1,5 +1,11 @@
+python_ok := $(shell python3 -c "import sys; result = \"ok\" if sys.version_info.minor >= 11 else \"nok\"; print(result)")
+
 install:
+ifeq ("$(python_ok)", "ok")
+	pip3 install -r requirements.txt --user --break-system-packages
+else
 	pip3 install -r requirements.txt --user
+endif
 	python3 setup.py install --user
 
 develop:

@@ -13,8 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from clerk.util import remove_file
+
 import os
-import pathlib
 import sqlite3
 
 
@@ -52,7 +53,7 @@ class OrderBook:
                 for transaction in self.conv(os.path.join(root, settlement))]
 
     def export(self, output_file):
-        pathlib.Path(output_file).unlink(missing_ok=True)
+        remove_file(output_file)
         conn = sqlite3.connect(output_file)
         curs = conn.cursor()
         curs.execute("create table __transactions__ (rowid integer primary key, date integer, description text, isin text, quantity integer, price real, value real, fee real, crt real, soli real, ct real, path text)")
