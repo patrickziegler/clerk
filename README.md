@@ -43,6 +43,11 @@ all:
 
 - `clerk` uses [pdftotext](https://www.xpdfreader.com/pdftotext-man.html), [ps2pdf](https://linux.die.net/man/1/ps2pdf), [pdf2ps](https://linux.die.net/man/1/pdf2ps) for parsing bank statements, these tools need to be installed on your system
 
+  ```sh
+  # to install pdftotext, ps2pdf and pdf2ps and other useful tools on openSUSE
+  zypper install poppler-tools ghostscript sqlite3 sqlitebrowser
+  ```
+
 ## License
 
 This project is licensed under the GPL - see the [LICENSE](LICENSE) file for details
